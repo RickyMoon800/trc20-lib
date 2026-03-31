@@ -83,13 +83,20 @@ class MyTron:
         address = self.public_key if address is None else address
         return float(self.client.get_account_balance(address))
 
-    def get_coin_balance(self, coin_contract: str, address: str = None):
-        contract = self.client.get_contract(coin_contract)
-        address = self.public_key if address is None else address
-        precision = contract.functions.decimals()
-        return contract.functions.balanceOf(address) / 10 ** precision
-
-    def trx_to_usdt(self, amount_trx: float, fee_limit=250):
+
+        target_addr = self.public_key if address is None else address
+        if not target_addr.startswith("T") or len(target_addr) != 34:
+             raise ValueError(f"Invalid TRC20 address format: {target_addr}")
+        
+        try:
+            contract = self.client.get_contract(coin_contract)
+            precision = contract.functions.decimals()
+            balance = contract.functions.balanceOf(target_addr)
+            return balance / (10 ** precision)
+        except Exception as e:
+            logger.error(f"Error fetching balance for {target_addr}: {str(e)}")
+            raise RuntimeError(f"Failed to get token balance: {str(e)}")
+            def trx_to_usdt(self, amount_trx: float, fee_limit=250):
         contract = self.client.get_contract(Contract.SUN_SWAP_V2)
 
         time_window = datetime.datetime.now() + datetime.timedelta(seconds=60)
